@@ -1,94 +1,106 @@
 # Bayesian Avatar Realism — Study 2 → Study 3 (Pyro/PyTorch)
 
-This repository reproduces the analyses for two within‑subject VR experiments (Study 2 and Study 3) on avatar **realism** and **enjoyment/quality** ratings. We fit a Bayesian hierarchical **ordinal** regression to Study 3 using **Pyro** (NUTS/HMC on **PyTorch**), with **Study 2‑informed hyperpriors** to test whether individual differences (random intercepts and slopes) generalize across studies. We compare these Bayesian results against standard **ANOVAs** and quantify **information gain** at the participant‑level random effects. A complementary continuous (Student‑t) model computes **Cohen’s d** style standardized contrasts.
+This repository reproduces the analyses for two within‑subject VR experiments (Study 2 and Study 3) on avatar **realism** and **enjoyment/quality** ratings. We fit a Bayesian hierarchical **ordinal** regression to Study 3 using **Pyro** (NUTS/HMC on **PyTorch**), with **Study 2‑informed hyperpriors** to test whether individual differences (random intercepts and slopes) generalize across studies. We compare these Bayesian results against standard **ANOVAs** and quantify **information gain** at the participant‑level random effects. A complementary Student‑t model computes **Cohen’s d**‑style standardized contrasts.
 
 ---
 
 ## Data
 
-- **study2_long.csv** — long‑format Study 2 data: required columns include at least
-  `participant_code`, `avatar_type`, `disclosure_sentiment`, `real_person_rating`, `enjoyment_rating`.
-- **study3_long.csv** — long‑format Study 3 data: required columns include at least
-  `participant_code`, `avatar` (Sync/Unreal or equivalent), `disclosure_sentiment` (Positive/Negative),
-  `real_person_rating`, `enjoyment_rating`.
-- Column names are cleaned to lowercase underscore format automatically (see `data_utils.py`).
-
-> Tip: The ordinal model expects ratings on a 1–5 scale; invalid/missing values are dropped by the loader.
+- **study2_long.csv** — long‑format Study 2 data: must include at least `participant_code`, `avatar_type`, `disclosure_sentiment`, `real_person_rating`, `enjoyment_rating`.
+- **study3_long.csv** — long‑format Study 3 data: must include at least `participant_code`, `avatar` (Sync/Unreal or equivalent), `disclosure_sentiment` (Positive/Negative), `real_person_rating`, `enjoyment_rating`.
+- Column names are auto‑cleaned to lowercase underscore format and coding columns are constructed (e.g., `avatar_c = −0.5 / +0.5`) in **`data_utils.py`**.
+- Ratings are expected on a **1–5** scale; invalid/missing values are dropped.
 
 ## Environment
 
 ```bash
 # Python 3.10+ recommended
 python -m venv .venv
-source .venv/bin/activate   # Windows (PowerShell): .venv\Scripts\Activate.ps1
+# Windows (cmd): .venv\Scripts\activate.bat
+# PowerShell:    .venv\Scripts\Activate.ps1
+# macOS/Linux:   source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-`requirements.txt` includes: numpy, pandas, matplotlib, arviz, xarray, pyro-ppl, torch, statsmodels.
-
-## Reproducing the pipeline
+## Repro pipeline (commands)
 
 From the repo root:
 
 ```bash
-# 1) (Optional) Frequentist baselines for both studies (outputs -> results_anova/)
+# 1) Frequentist baselines (Study 2 & 3); outputs -> results_anova/
 python run_anovas_study2_study3.py
 
-# 2) Hyperpriors from Study 2 (writes study2_hyperpriors.json)
+# 2) Phase‑1: Fit Study‑2 LMM to derive hyperpriors; writes study2_hyperpriors.json
 python phase1_study2_hyperpriors.py
 
-# 3) Bayesian ORDINAL model on Study 3 with Study-2-informed hyperpriors
-#    Outputs -> results/: idata, summaries, random-effects info_gain, PPCs, etc.
+# 3) Phase‑2 (ORDINAL): Hierarchical cumulative‑logit for Study‑3 (uses hyperpriors)
+#    Outputs -> results/: idata (.nc), summaries, random‑effects info‑gain, PPCs, contrasts
 python phase2_study3_ordinal.py
 
-# 4) Bayesian CONTINUOUS (Student‑t) model on Study 3 to compute Cohen's d
-#    Outputs -> results_cont/: idata and info_gain tables
+# 4) Phase‑2 (CONTINUOUS): Student‑t LMM for effect sizes (Cohen's d) and checks
+#    Outputs -> results_cont/: idata (.nc), effect_size_d_*.csv, info‑gain tables
 python phase2_study3_continuous.py
 
-# 5) Posterior predictive checks (reads results/ppc_*.csv)
+# 5) Posterior predictive checks: observed vs model (reads results/ppc_*.csv)
 python make_ppc_obs_vs_model.py
 
-# 6) Random‑effects visualizations (reads results/*.nc)
+# 6) Participant random‑effects figures (reads results/*.nc)
 python make_re_plots_random_effects.py
 
-# 7) Contrast plots (Unreal−Sync; Positive−Negative) and publication figures
+# 7) Contrast plots (Unreal−Sync; Positive−Negative) with 89% CrIs
 python make_contrast_plots.py
 
-# 8) Compare ANOVA vs Bayesian information‑gain with figures
+# 8) Compare ANOVA vs Bayesian information‑gain (“bits”)
 python make_info_gain_vs_anova.py
+
+# 9) NEW: Hyperprior transfer plots — overlay Study‑2‑informed priors vs Study‑3 posteriors (σ)
+python make_hyperprior_transfer_plots.py
+
+# 10) NEW: Prior vs posterior predictive for a NEW participant (P(rating ≥ 4) by condition)
+python make_prior_vs_posterior_predictive.py
 ```
 
-Outputs are written under `results/`, `results_cont/`, `results_anova/`, and `figs/`. The ordinal
-script creates its folders as needed; if any folder is missing, create it manually.
+## What each script produces
 
-## Repository layout
+- **`phase1_study2_hyperpriors.py`** → `study2_hyperpriors.json` (prior centers for β and LogNormal params for σ/SDs), derived from a hierarchical Gaussian LMM on Study 2.
+- **`phase2_study3_ordinal.py`** → under `results/` per outcome (`realism`, `quality`):
+  - `study3_{tag}_idata.nc` (ArviZ InferenceData), `summary_{tag}.csv` (posterior summaries),
+  - `effects_{tag}.csv` (main/interaction contrasts), `cond_probs_{tag}_*.csv` (category probabilities),
+  - `ppc_{tag}.csv` (posterior predictive), `trace_{tag}.png` (diagnostics),
+  - `info_gain_random_effects_{tag}_by_pid.csv` and `_by_param.csv` (participant‑level “bits”).  
+- **`phase2_study3_continuous.py`** → under `results_cont/`:
+  - `study3_cont_{tag}_idata.nc` (InferenceData),
+  - `effect_size_d_{tag}.csv` (Cohen’s d for avatar, valence, interaction),
+  - `info_gain_cont_random_{tag}_by_pid.csv` and `_by_param.csv`.
+- **`run_anovas_study2_study3.py`** → under `results_anova/`:
+  - `study{2|3}_anova_{realism3|quality3}.csv`, `study{2|3}_cellmeans_{...}.csv`, and `study3_anova_all.csv`.
+- **`make_ppc_obs_vs_model.py`** → uses `results/ppc_*.csv` to create observed vs simulated PPC plots.
+- **`make_re_plots_random_effects.py`** → plots participant random intercepts/slopes from `results/*.nc`.
+- **`make_contrast_plots.py`** → clean contrast figures (Unreal−Sync; Positive−Negative) with 89% CrIs.
+- **`make_info_gain_vs_anova.py`** → side‑by‑side figures/tables comparing ANOVA vs Bayesian information‑gain.
+- **NEW `make_hyperprior_transfer_plots.py`** → saves
+  - `figs/hyperprior_vs_posterior_sigma_realism.png` and `..._quality.png` by overlaying the Study‑2–informed **LogNormal** priors for σ with Study‑3 posteriors. Inputs: `study2_hyperpriors.json` and `results/study3_{tag}_idata.nc`.
+- **NEW `make_prior_vs_posterior_predictive.py`** → saves
+  - `figs/prior_vs_posterior_new_participant_realism.png` and `..._quality.png`, comparing **prior‑predictive** vs **posterior‑predictive** P(rating ≥ 4) for a **new participant** across the four condition cells (First/Third × Negative/Positive). Inputs: `results/study3_{tag}_idata.nc`.
 
-- `data_utils.py` – shared loaders/cleaners and coding (e.g., centered contrasts, 1–5 checks)
-- `phase1_study2_hyperpriors.py` – estimates hyperpriors from Study 2 and writes `study2_hyperpriors.json`
-- `phase2_study3_ordinal.py` – hierarchical cumulative‑logit model (random intercepts and slopes)
-- `phase2_study3_continuous.py` – Student‑t LMM for continuous approximation + Cohen’s d
-- `run_anovas_study2_study3.py` – within‑subjects ANOVAs and cell means for Studies 2/3
-- `make_ppc_obs_vs_model.py` – posterior predictive checks (observed vs simulated)
-- `make_re_plots_random_effects.py` – participant random‑effect plots (intercepts, slopes)
-- `make_contrast_plots.py` – Unreal−Sync and Positive−Negative contrasts with 89% CrIs
-- `make_info_gain_vs_anova.py` – side‑by‑side “bits” from ANOVA vs Bayesian RE information
-- `make_plots.py` – additional publication‑quality figures
+## Repository layout (key files)
 
-## Notes
+- `data_utils.py` – shared loaders/cleaners and contrast coding (centered −0.5 / +0.5).
+- `phase1_study2_hyperpriors.py` – derive Study‑2 hyperpriors (writes `study2_hyperpriors.json`).
+- `phase2_study3_ordinal.py` – hierarchical cumulative‑logit model for Study 3 with Study‑2‑informed priors.
+- `phase2_study3_continuous.py` – Student‑t LMM for effect sizes and info‑gain cross‑checks.
+- Plotters: `make_ppc_obs_vs_model.py`, `make_re_plots_random_effects.py`, `make_contrast_plots.py`,
+  `make_info_gain_vs_anova.py`, **`make_hyperprior_transfer_plots.py`**, **`make_prior_vs_posterior_predictive.py`**.
 
-- The models run on CPU by default; **PyTorch** is used as the compute backend and **Pyro** for NUTS.
-- Study 3 rating outcomes are treated as **ordinal (1–5)**; the Student‑t model is for effect‑size reporting.
-- Information‑gain tables are produced both **by‑parameter** and **by‑participant** for realism and quality.
+## Outputs & folders
+
+- `results/` — ordinal model artifacts (NetCDF, CSVs, PNGs)
+- `results_cont/` — continuous model artifacts (NetCDF, CSVs)
+- `results_anova/` — frequentist baselines
+- `figs/` — publication‑quality figures
+
+> Ensure these folders are **git‑ignored** (see `.gitignore`) so large artifacts don’t get committed.
 
 ---
 
-### Short excerpt from the report
-
-```
-Bayesian Hierarchical Ordinal Regression for Avatar Realism and Enjoyment (Study 3)
-Overview and Data Sources
-In this session, we built a Bayesian hierarchical ordinal regression model to analyze Study 3, focusing on two key outcome measures: perceived avatar realism and conversation enjoyment (conversation quality). The model is hierarchical because it accounts for participant-level variability (each participant has their own baseline and sensitivity to conditions), and it’s ordinal because the ratings are on an ordered Likert scale (e.g. 1–5 stars). Crucially, we incorporated prior information from Study 2 to inform our model. Study 2 was a baseline study where participants rated realism and quality in simpler scenarios; we extracted prior means for the fixed effects from Study 2; random-effect scales were not set from Study 2 (they are learned in Study 3 with Half-Normal(0.5) priors).[1]. By anchoring the model with realistic prior expectations of rating behavior (e.g. reasonable fixedeffect means informed by Study 2), we add stability and interpretability to the analysis. The overall goal of this modeling was to estimate how experimental conditions in Study 3 affected realism and enjoyment ratings while accounting for individual differences.
-Prior Analyses and the Need for Information Gain: Prior work analyzing these data with traditional ANOVA confirmed the presence of significant main effects of avatar realism and disclosure valence on both outcome measures, but such me
-```
-
-If you prefer not to include any report excerpt in the README, delete the section above.
+If you want the README to include a short excerpt from the report, I can paste the abstract/overview section verbatim on request.

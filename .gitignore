@@ -1,0 +1,26 @@
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+# --- Python cache / build --- 
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+# --- IDE / OS cruft --- 
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+# --- Model/trace artifacts --- 
+*.nc
+*.pt
+*.pth
+# --- Generated outputs --- 
+results/
+results_cont/
+results_anova/
+figs/

@@ -103,4 +103,3 @@ python make_prior_vs_posterior_predictive.py
 
 ---
 
-If you want the README to include a short excerpt from the report, I can paste the abstract/overview section verbatim on request.

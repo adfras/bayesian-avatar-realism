@@ -1,8 +1,14 @@
-# --- Virtual environments ---
-.venv/
-venv/
-env/
-# --- Python cache / build --- 
+# OS metadata
+.DS_Store
+Thumbs.db
+*.Zone.Identifier
+*:Zone.Identifier
+
+# IDE / editor config
+.vscode/
+.idea/
+
+# Python artifacts
 __pycache__/
 *.py[cod]
 *.pyo
@@ -10,17 +16,35 @@ __pycache__/
 *.egg-info/
 dist/
 build/
-# --- IDE / OS cruft --- 
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-# --- Model/trace artifacts --- 
+
+# Virtual environments / local deps
+.venv/
+venv/
+env/
+.pyhome/
+.deps/
+
+# R artifacts
+.Rhistory
+.RData
+.Ruserdata
+.Rprofile
+.Rproj.user/
+.Rproj*
+.Rlibs/
+R/library/
+
+# Model / trace artifacts
 *.nc
 *.pt
 *.pth
-# --- Generated outputs --- 
+models/
+
+# Generated outputs
 results/
 results_cont/
 results_anova/
 figs/
+
+# Notebooks
+.ipynb_checkpoints/

@@ -1,0 +1,20 @@
+Repeated-measures ANOVA for quality_rating 
+
+Anova Table (Type 3 tests)
+
+Response: y
+                            Effect    df  MSE         F  pes p.value
+1                      avatar_type 1, 56 0.46    4.58 * .076    .037
+2             disclosure_sentiment 1, 56 0.10 35.55 *** .388   <.001
+3 avatar_type:disclosure_sentiment 1, 56 0.07      0.88 .016    .351
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '+' 0.1 ' ' 1
+
+Estimated marginal means:
+ avatar_type disclosure_sentiment emmean     SE df lower.CL upper.CL
+ sync        negative               3.34 0.1200 56     3.10     3.58
+ unreal      negative               3.50 0.1200 56     3.26     3.74
+ sync        positive               3.56 0.1140 56     3.33     3.78
+ unreal      positive               3.78 0.0979 56     3.58     3.98
+
+Confidence level used: 0.95 

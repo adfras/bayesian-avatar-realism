@@ -1,0 +1,7 @@
+outcome,effect,mean_bits,median_bits
+Quality,Avatar slope (fidelity sensitivity),1.3573663015865465,1.0328204621747417
+Quality,Intercept (baseline bias),2.2929299414550113,1.8574995891764325
+Quality,Valence slope (disclosure sensitivity),0.8934952181881987,0.8312496961515258
+Realism,Avatar slope (fidelity sensitivity),2.1006981022746474,1.6373449418531547
+Realism,Intercept (baseline bias),2.411085405227592,2.0253303048057982
+Realism,Valence slope (disclosure sensitivity),2.9000197619040935,0.9011191734740932

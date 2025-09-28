@@ -1,0 +1,20 @@
+Repeated-measures ANOVA for realism_rating 
+
+Anova Table (Type 3 tests)
+
+Response: y
+                            Effect    df  MSE         F  pes p.value
+1                      avatar_type 1, 56 1.11 15.70 *** .219   <.001
+2             disclosure_sentiment 1, 56 0.04  12.00 ** .176    .001
+3 avatar_type:disclosure_sentiment 1, 56 0.04      1.94 .034    .169
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '+' 0.1 ' ' 1
+
+Estimated marginal means:
+ avatar_type disclosure_sentiment emmean    SE df lower.CL upper.CL
+ sync        negative               2.39 0.121 56     2.15     2.63
+ unreal      negative               2.98 0.133 56     2.72     3.25
+ sync        positive               2.52 0.130 56     2.26     2.78
+ unreal      positive               3.03 0.124 56     2.78     3.28
+
+Confidence level used: 0.95 
